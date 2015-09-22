@@ -10,7 +10,7 @@ npm install
 ```
 #### Run (required node.js):
 ```shell
-node src/api.js
+gulp
 ```
 
 The MIT License

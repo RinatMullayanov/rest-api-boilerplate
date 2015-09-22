@@ -10,7 +10,7 @@
   "license": "MIT",
   "devDependencies": {
     "browserify": "^11.1.0",
-    "gulp": "^3.8.10",
+    "gulp": "^3.9.0",
     "gulp-babel": "^5.2.1",
     "gulp-clean": "^0.3.1",
     "gulp-concat": "^2.4.1",
@@ -27,9 +27,11 @@
   },
   "dependencies": {
     "bluebird": "^2.10.0",
+    "body-parser": "^1.14.0",
     "compression": "^1.2.0",
     "cors": "^2.5.0",
     "express": "^4.10.1",
+    "formidable": "^1.0.17",
     "mongodb": "^2.0.43",
     "winston": "^0.8.3"
   }

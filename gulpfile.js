@@ -1,22 +1,14 @@
-var gulp = require("gulp");
-var rename = require("gulp-rename");
-var header = require('gulp-header');
-var replace = require('gulp-replace');
-var sourcemaps = require("gulp-sourcemaps");
+var gulp = require('gulp');
+var clean = require('gulp-clean');
+var order = require('gulp-order');
+var concat = require('gulp-concat');
+var rename = require('gulp-rename');
+
 var babel = require("gulp-babel");
-var concat = require("gulp-concat");
-
-var browserify = require('browserify');
-var source = require('vinyl-source-stream');
-
 var eslint = require('gulp-eslint');
 
-var config = {
-  srcDir: 'src',
-  distDir: 'dist',
-  //https://babeljs.io/docs/usage/polyfill/ for enable support https://babeljs.io/docs/learn-es2015/#generators
-  polyfill: './node_modules/gulp-babel/node_modules/babel-core/browser-polyfill.js'
-};
+var server = require('./src/api.js');
+var config = require('./src/config.json');
 
 gulp.task('eslint', function () {
     return gulp.src(['src/*.js'])
@@ -34,51 +26,28 @@ gulp.task('eslint', function () {
 });
 
 gulp.task('babel-node', function () {
-  //http://babeljs.io/docs/usage/polyfill/#usage-in-node-browserify
-  return gulp.src([config.polyfill, 'src/**/*.js'])
+  return gulp.src(['src/**/*.js'])
     .pipe(sourcemaps.init())
     .pipe(babel())
     .pipe(replace(/[',"]use strict[',"];/g, ''))
     .pipe(concat('all.js'))
     .pipe(header("'use strict';"))
     .pipe(sourcemaps.write('.'))
-    .pipe(gulp.dest(config.distDir));
+    .pipe(gulp.dest('dist'));
 });
 
-gulp.task('babel-browser', function () {
-  return gulp.src('src/**/*.js')
-    .pipe(sourcemaps.init())
-    .pipe(babel())
-    .pipe(replace(/[',"]use strict[',"];/g, ''))
-    .pipe(concat('all-browser.js'))
-    .pipe(header("'use strict';"))
-    .pipe(sourcemaps.write('.'))
-    .pipe(gulp.dest(config.distDir));
+
+gulp.task('server', function () {
+  server.start(config);
 });
 
-gulp.task("babel-for-browserify", function () {
-  return gulp.src('src/**/*.js')
-    .pipe(babel())
-    .pipe(gulp.dest(config.distDir));
+gulp.task('watch', ['server'], function () {
+  gulp.watch(['src/*/**', 'src/*']).on('change', function (file) {
+    // tell the browser that the file was updated
+    console.log('changed: ' + file.path);
+  });
 });
 
-gulp.task('copy-polyfill', function () {
-  return gulp.src(config.polyfill)
-    .pipe(gulp.dest(config.distDir));
-});
-
-gulp.task('like-babelify', ['babel-browser', 'babel-for-browserify', 'copy-polyfill'], function() {
-  return browserify('./dist/all-browser.js', { debug: true }) // enable sourceMap inside bundle.js file
-    .bundle()
-    .pipe(source(config.distDir + '/bundle.js'))
-    .pipe(gulp.dest(function(file) {
-      return file.base;
-    }));
-});
-
-gulp.task('watch', function () {
-  gulp.watch(['src/**/*.js'], ['like-babelify']);
-});
-
-gulp.task('default', ['like-babelify'], function () {
+gulp.task('default', ['watch'], function () {
+  // place code for your default task here
 });

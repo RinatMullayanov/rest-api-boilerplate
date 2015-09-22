@@ -1,9 +1,11 @@
+var api = {};
+
 var express = require('express');
+var bodyParser = require('body-parser');
 var compress = require('compression'); // gzip
 var cors = require('cors'); // CORS
 var app = express();
 
-var config = require('./config');
 var router = require('./router');
 
 var winston = require('winston'); // logger
@@ -23,6 +25,9 @@ var logger = new (winston.Logger)({
   ]
 });
 
+// parse application/json - This does NOT handle multipart bodies, due to their complex and typically large nature!
+app.use(bodyParser.json());
+
 // Access-Control-Allow-Origin: *
 app.use(cors({
   methods: ['GET', 'PUT', 'POST'],
@@ -38,27 +43,29 @@ logger.info('Gzip is enabled.');
 
 // hide information
 app.disable('x-powered-by');
+// for api versioning
+app.use('/api/v1/', router.create(logger));
 
-app.use(router.create(logger));
+api.start = function(config) {
+  app.listen(config.port, function () {
+    logger.transports.console.level = 'info';
 
-// listen
-app.listen(config.port, function () {
-  logger.transports.console.level = 'info';
+    // setting run status: development or production
+    if (config.status === 'dev') {
+      logger.info('Server start like [DEV]');
+    } else if (config.status === 'production') {
+      logger.info('Server start like [PRODUCTION]');
+    } else {
+      config.status = 'production';
+      logger.warn('Server status not defined! Server start like [PRODUCTION]');
+    }
 
-  // setting run status: development or production
-  if (config.status === 'dev') {
-    logger.info('Server start like [DEV]');
-  } else if (config.status === 'production') {
-    logger.info('Server start like [PRODUCTION]');
-  } else {
-    config.status = 'production';
-    logger.warn('Server status not defined! Server start like [PRODUCTION]');
-  }
+    logger.info('Server start is listening port: ' + config.port);
+    if (config.status === 'production') {
+      // less logger level
+      logger.transports.console.level = 'error';
+    }
+  });
+}
 
-  logger.info('Server start is listening port: ' + config.port);
-  if (config.status === 'production') {
-    // less logger level
-    logger.transports.console.level = 'error';
-  }
-});
-
+module.exports = api;
